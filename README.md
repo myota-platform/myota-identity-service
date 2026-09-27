@@ -1,20 +1,28 @@
-# MyOTA Outdoor Activation Platform
+# MyOTA identity service
 
 MyOTA is a programme-agnostic platform for outdoor activation programmes. MPOTA is represented as a configured programme, not as the platform itself. No rules or charter text are copied from POTA or any other programme: every programme supplies its own configuration, policy, eligibility, awards and public charter.
 
-This repository is a runnable vertical-slice bootstrap for the service repositories described in [`docs/repository-map.md`](docs/repository-map.md). It contains four independently runnable Python services, an API-first contract, a universal browser UI, PostGIS migrations, and Kubernetes/Helm deployment assets.
+This repository owns amateur-radio-aware accounts and authentication. It is
+independent of Keycloak and does not treat an external OIDC provider as the
+source of truth. The service owns accounts/persons, operator/SWL
+participation, one primary callsign plus additional callsigns, verification
+lifecycle, roles/scopes, sessions, recovery, privacy, security events, and
+optional per-programme OIDC mappings.
 
 ## What works now
 
 - Amateur-radio-aware identity: operator/SWL participation, multiple callsigns, one primary callsign, lifecycle and verification fields.
-- Shared entity-category catalogue and programme assignments; programme owners define rules, minimum QSOs, awards, themes and optional OIDC settings.
-- Geodata lifecycle: imported candidate → community proposal → approver review → approved entity.
-- Provenance-aware imports with adapter metadata for ParkServe, OSM, government GIS and manual proposals.
-- Activation and QSO primitives with idempotency keys and audit events.
-- Universal themed frontend with verified/candidate map distinction.
-- OpenAPI and event contracts, ADRs, migration notes, health endpoints and local deployment manifests.
+- The identity service does not own programmes, entities, activity/QSOs,
+  awards, or admin-web presentation; those boundaries are defined in the
+  [repository map](https://github.com/myota-platform/myota-docs/blob/main/docs/repository-map.md).
+- The current slice includes login, registration, account administration,
+  callsign verification fields, scoped roles, privacy export/deactivation,
+  and security-event primitives.
 
-The default test/runtime adapter is in-memory so the slice can be exercised without third-party Python packages. PostgreSQL/PostGIS is the production storage target and is defined in `db/migrations/`.
+The unit-test adapter can run in memory. Durable Compose/Kubernetes operation
+uses PostgreSQL through the platform/deployment configuration and requires
+explicit production secrets; do not use the test adapter as a production
+data store.
 
 ## Run the vertical slice
 
@@ -23,13 +31,20 @@ python3 -m unittest discover -s tests -v
 python3 services/dev_server.py
 ```
 
-Open <http://127.0.0.1:8080>. The dev server starts the four services on ports 8001–8004 and proxies the browser API calls. It is intentionally dependency-free.
+Open the identity service health endpoint on port 8001 when running the local
+slice. For durable data, use the Compose stack in myota-deploy with Colima.
 
-For a containerized PostGIS environment, use `docker compose up --build` after starting Colima. The image uses the same service code with `SERVICE=identity|programmes|geodata|activity`.
+The remaining Internet-facing identity gates are listed in the [charter gap
+analysis](https://github.com/myota-platform/myota-docs/blob/main/docs/charter-gap-analysis.md),
+including production key management, abuse controls, user self-service, and
+security review.
 
 ## Architecture
 
-Read [`docs/architecture.md`](docs/architecture.md), [`docs/adr/0001-storage-topology.md`](docs/adr/0001-storage-topology.md), and [`docs/repository-map.md`](docs/repository-map.md). The current bootstrap is kept together to make the vertical slice easy to run; the repository map defines the justified GitHub split once the MyOTA organization is available.
+Read the [MyOTA charter](https://github.com/myota-platform/myota-docs/blob/main/docs/project-charter.md)
+for the platform purpose and policy boundaries. MPOTA remains sample data
+only; this service must support any programme without inheriting another
+programme's rules.
 
 ## Source project
 
