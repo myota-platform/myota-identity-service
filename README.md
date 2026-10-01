@@ -46,6 +46,11 @@ analysis](https://github.com/myota-platform/myota-docs/blob/main/docs/charter-ga
 including production key management, abuse controls, user self-service, and
 security review.
 
+The durable runtime also exposes aggregate identity metrics at `/metrics` for
+users, participation type, callsigns, roles, security events and locked
+accounts. OpenTelemetry request telemetry is enabled by the deployment
+configuration rather than by the unit-test adapter.
+
 ## Architecture
 
 Read the [MyOTA charter](https://github.com/myota-platform/myota-docs/blob/main/docs/project-charter.md)
