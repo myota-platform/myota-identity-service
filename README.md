@@ -19,6 +19,13 @@ optional per-programme OIDC mappings.
   callsign verification fields, scoped roles, privacy export/deactivation,
   and security-event primitives.
 
+Account administration also exposes the Phase 1 resource aliases: `PATCH
+/v1/identity/accounts/{accountId}`, `PATCH
+/v1/identity/roles/{roleCode}`, `PUT
+/v1/identity/accounts/{accountId}/role-assignments`, and `PUT
+/v1/identity/accounts/{accountId}/primary-callsign`. The older action routes
+remain compatibility aliases. See the [Phase 1 API resource update record](https://github.com/myota-platform/myota-docs/blob/main/docs/api-phase1-resource-updates.md).
+
 The unit-test adapter can run in memory. Durable Compose/Kubernetes operation
 uses PostgreSQL through the platform/deployment configuration and requires
 explicit production secrets; do not use the test adapter as a production
