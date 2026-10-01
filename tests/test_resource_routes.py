@@ -26,6 +26,7 @@ class IdentityResourceRouteTests(unittest.TestCase):
 
     def test_phase1_aliases_use_existing_mutation_handlers(self):
         self.assertIs(IdentityHandler.routes[("PATCH", "/v1/identity/accounts/{accountId}")], IdentityHandler.update_admin_account)
+        self.assertIs(IdentityHandler.routes[("POST", "/v1/identity/roles")], IdentityHandler.create_admin_role)
         self.assertIs(IdentityHandler.routes[("PATCH", "/v1/identity/roles/{roleCode}")], IdentityHandler.update_admin_role)
         self.assertIs(IdentityHandler.routes[("PUT", "/v1/identity/accounts/{accountId}/role-assignments")], IdentityHandler.update_admin_account)
         self.assertIs(IdentityHandler.routes[("PUT", "/v1/identity/accounts/{accountId}/primary-callsign")], IdentityHandler.set_primary)
