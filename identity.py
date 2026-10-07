@@ -36,6 +36,16 @@ SECURITY_EVENT_RETENTION_SECONDS = int(
 
 ADMIN_PERMISSION_CATALOG = [
     {
+        "code": "operations.read",
+        "label": "View NATS / JetStream status and sampled history",
+        "group": "Operations",
+    },
+    {
+        "code": "observability.view",
+        "label": "View platform operational status",
+        "group": "Operations",
+    },
+    {
         "code": "identity.admin",
         "label": "View and edit user accounts",
         "group": "Identity",
