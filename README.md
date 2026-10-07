@@ -38,15 +38,20 @@ uses PostgreSQL through the platform/deployment configuration and requires
 explicit production secrets; do not use the test adapter as a production
 data store.
 
-## Run the vertical slice
+## Test and run locally
 
 ```bash
+python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
-python3 services/dev_server.py
+python3 run_identity.py
 ```
 
-Open the identity service health endpoint on port 8001 when running the local
-slice. For durable data, use the Compose stack in myota-deploy with Colima.
+The standalone entry point listens on port 8001 and needs explicit database
+configuration for durable storage. For the complete durable stack, use
+[myota-deploy with Colima](https://github.com/myota-platform/myota-deploy#run-the-vertical-slice):
+identity uses plain PostgreSQL `myota_core`, not PostGIS or `myota_activity`.
+The [JetStream access guide](https://github.com/myota-platform/myota-docs/blob/main/docs/jetstream-admin-status.md)
+documents the latest operations permissions and admin integration.
 
 The remaining Internet-facing identity gates are listed in the [charter gap
 analysis](https://github.com/myota-platform/myota-docs/blob/main/docs/charter-gap-analysis.md),
@@ -67,4 +72,5 @@ programme's rules.
 
 ## Source project
 
-The original `ea7klk/mpota` repository remains untouched. Its charter and planned flows are treated as the migration source; see [`docs/migration-from-mpota.md`](docs/migration-from-mpota.md).
+The original `ea7klk/mpota` repository remains untouched; see the
+[migration strategy](https://github.com/myota-platform/myota-docs/blob/main/docs/migration-from-mpota.md).
