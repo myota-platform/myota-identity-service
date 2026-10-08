@@ -26,6 +26,11 @@ optional per-programme OIDC mappings.
   callsign verification fields, scoped roles, privacy export/deactivation,
   and security-event primitives.
 
+Global operators are exempt from the general per-account/source login-attempt
+throttle so repeated legitimate administrator sign-ins do not lock out the
+platform. The separate temporary account lock after repeated invalid passwords
+still applies to global operators as a brute-force safeguard.
+
 Account administration also exposes the Phase 1 resource aliases: `PATCH
 /v1/identity/accounts/{accountId}`, `PATCH
 /v1/identity/roles/{roleCode}`, `PUT
