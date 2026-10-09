@@ -55,7 +55,7 @@ The standalone entry point listens on port 8001 and needs explicit database
 configuration for durable storage. For the complete durable stack, use
 [myota-deploy with Colima](https://github.com/myota-platform/myota-deploy#run-the-vertical-slice):
 identity uses plain PostgreSQL `myota_core`, not PostGIS or `myota_activity`.
-The [JetStream access guide](https://github.com/myota-platform/myota-docs/blob/main/docs/jetstream-admin-status.md)
+The [JetStream access guide](https://github.com/myota-platform/myota-docs/blob/main/docs/operations/messaging/jetstream-admin-status.md)
 documents the latest operations permissions and admin integration.
 
 The remaining Internet-facing identity gates are listed in the [charter gap
