@@ -6,6 +6,26 @@ from identity import IdentityHandler
 
 
 class IdentityMetricsTests(unittest.TestCase):
+    def test_http_metrics_use_bounded_route_template_labels(self):
+        with _HTTP_METRIC_LOCK:
+            _HTTP_METRIC_VALUES.clear()
+
+        _record_http_metric("GET", "/v1/accounts/{accountId}", 200, 12)
+        output = _render_http_metrics()
+
+        self.assertIn(
+            'myota_http_server_requests_total{http_request_method="GET",'
+            'http_route="/v1/accounts/{accountId}",http_response_status_code="200"} 1',
+            output,
+        )
+        self.assertIn(
+            'myota_http_server_duration_milliseconds_bucket{'
+            'http_request_method="GET",http_route="/v1/accounts/{accountId}",'
+            'http_response_status_code="200",le="25"} 1',
+            output,
+        )
+        self.assertNotIn("private-account-id", output)
+
     def test_metrics_are_aggregated_and_bounded(self):
         fake_store = SimpleNamespace(
             items={

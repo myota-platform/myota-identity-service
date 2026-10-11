@@ -25,6 +25,83 @@ from myota_logging import (
 from typing import Any, Callable, Iterator
 
 MAX_BODY_BYTES = int(os.environ.get("MYOTA_MAX_BODY_BYTES", "1048576"))
+_HTTP_METRIC_BUCKETS_MS = (
+    5,
+    10,
+    25,
+    50,
+    100,
+    250,
+    500,
+    1000,
+    2500,
+    5000,
+    10000,
+)
+_HTTP_METHOD_LABELS = frozenset(
+    {"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"}
+)
+_HTTP_METRIC_LOCK = threading.RLock()
+_HTTP_METRIC_VALUES: dict[tuple[str, str, int], list[float]] = {}
+
+
+def _record_http_metric(
+    method: str, route: str, status: int, duration_ms: float
+) -> None:
+    # Route labels are declared templates or fixed health/metrics/unmatched
+    # values selected by JsonHandler; request paths and domain IDs never enter.
+    method_label = method if method in _HTTP_METHOD_LABELS else "OTHER"
+    status_label = status if 100 <= status <= 599 else 0
+    label = (method_label, route, status_label)
+    with _HTTP_METRIC_LOCK:
+        values = _HTTP_METRIC_VALUES.setdefault(
+            label, [0.0, 0.0, *([0.0] * len(_HTTP_METRIC_BUCKETS_MS))]
+        )
+        duration = max(0.0, duration_ms)
+        values[0] += 1
+        values[1] += duration
+        for index, bound in enumerate(_HTTP_METRIC_BUCKETS_MS, start=2):
+            if duration <= bound:
+                values[index] += 1
+
+
+def _prometheus_label(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+
+
+def _render_http_metrics() -> str:
+    with _HTTP_METRIC_LOCK:
+        rows = [
+            (label, values[:]) for label, values in _HTTP_METRIC_VALUES.items()
+        ]
+    lines = [
+        "# HELP myota_http_server_requests_total Completed HTTP server requests.",
+        "# TYPE myota_http_server_requests_total counter",
+        "# HELP myota_http_server_duration_milliseconds HTTP server request duration in milliseconds.",
+        "# TYPE myota_http_server_duration_milliseconds histogram",
+    ]
+    for (method, route, status), values in sorted(rows):
+        labels = (
+            f'http_request_method="{_prometheus_label(method)}",'
+            f'http_route="{_prometheus_label(route)}",'
+            f'http_response_status_code="{status}"'
+        )
+        lines.append(
+            f"myota_http_server_requests_total{{{labels}}} {values[0]:g}"
+        )
+        for index, bound in enumerate(_HTTP_METRIC_BUCKETS_MS, start=2):
+            lines.append(
+                f'myota_http_server_duration_milliseconds_bucket{{{labels},le="{bound}"}} {values[index]:g}'
+            )
+        lines.extend(
+            [
+                f'myota_http_server_duration_milliseconds_bucket{{{labels},le="+Inf"}} {values[0]:g}',
+                f"myota_http_server_duration_milliseconds_sum{{{labels}}} {values[1]:g}",
+                f"myota_http_server_duration_milliseconds_count{{{labels}}} {values[0]:g}",
+            ]
+        )
+    return "\n".join(lines) + "\n"
+
 
 _CORRELATION_ID: ContextVar[str | None] = ContextVar(
     "myota_correlation_id", default=None
@@ -387,6 +464,10 @@ class JsonHandler(BaseHTTPRequestHandler):
             )
         )
         started = getattr(self, "_request_started_at", time.perf_counter())
+        duration_ms = (time.perf_counter() - started) * 1000
+        _record_http_metric(
+            getattr(self, "command", "UNKNOWN"), route_name, status, duration_ms
+        )
         span = getattr(self, "_http_span", None)
         if span:
             span.set_result(status, route_name)
@@ -396,7 +477,7 @@ class JsonHandler(BaseHTTPRequestHandler):
                 method=getattr(self, "command", "UNKNOWN"),
                 route=route_name,
                 status=status,
-                duration_ms=(time.perf_counter() - started) * 1000,
+                duration_ms=duration_ms,
                 request_id=getattr(self, "request_id", ""),
                 correlation_id=getattr(self, "correlation_id", ""),
             )
@@ -526,7 +607,9 @@ class JsonHandler(BaseHTTPRequestHandler):
             return
         path = self.path.split("?", 1)[0]
         if method == "GET" and path == "/metrics":
-            self._send_metrics(type(self).metrics_text())
+            self._send_metrics(
+                type(self).metrics_text() + _render_http_metrics()
+            )
             return
         for (route_method, pattern), fn in self.routes.items():
             if route_method != method:

@@ -64,11 +64,12 @@ including production key management, abuse controls, user self-service, and
 security review.
 
 The durable runtime exposes bounded aggregate gauges at `/metrics` for user
-counts by the fixed participation types, callsigns, active role assignments,
-retained security events, and currently locked accounts. Labels contain only
-the two fixed participation types; the endpoint never exposes account,
-callsign, email, credential, or event identifiers. OpenTelemetry request
-telemetry is configured separately by deployment.
+bounded request counters and duration histograms, plus aggregate gauges for
+user counts by fixed participation type, callsigns, active role assignments,
+retained security events, and currently locked accounts. Request labels use
+only HTTP method, declared route template, and status code. Domain gauges omit
+account, callsign, email, credential, and event identifiers. The OTel Collector
+scrapes `/metrics` every 15 seconds.
 
 ## Architecture
 
