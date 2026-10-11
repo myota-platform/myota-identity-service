@@ -69,7 +69,9 @@ class RetiredOperationsPermissionTests(unittest.TestCase):
         ):
             response = IdentityHandler.current_account(None, {})
 
-        self.assertEqual(response["scopes"], ["identity.me", "observability.view"])
+        self.assertEqual(
+            response["scopes"], ["identity.me", "observability.view"]
+        )
         self.assertNotIn("operations.read", response["scopes"])
 
 
