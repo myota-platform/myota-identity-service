@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import json
 import base64
 import hashlib
@@ -14,6 +16,8 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
+
+from myota_logging import log_http_completed
 from typing import Any, Callable, Iterator
 
 MAX_BODY_BYTES = int(os.environ.get("MYOTA_MAX_BODY_BYTES", "1048576"))
@@ -334,7 +338,29 @@ class JsonHandler(BaseHTTPRequestHandler):
     def _request_id(self) -> str:
         return self.headers.get("X-Request-ID") or new_id()
 
+    def _log_http_completed(self, status: int) -> None:
+        if getattr(self, "_http_logged", False):
+            return
+        self._http_logged = True
+        route = getattr(self, "current_route", None)
+        route_name = route[1] if route else (
+            self.path.split("?", 1)[0]
+            if self.path.split("?", 1)[0] in {"/healthz", "/metrics"}
+            else "/_unmatched"
+        )
+        started = getattr(self, "_request_started_at", time.perf_counter())
+        log_http_completed(
+            logging.getLogger(f"{self.service}.http"),
+            method=getattr(self, "command", "UNKNOWN"),
+            route=route_name,
+            status=status,
+            duration_ms=(time.perf_counter() - started) * 1000,
+            request_id=getattr(self, "request_id", ""),
+            correlation_id=getattr(self, "correlation_id", ""),
+        )
+
     def _send(self, status: int, payload: Any) -> None:
+        self._log_http_completed(status)
         data = (
             b""
             if status == 204
@@ -382,6 +408,8 @@ class JsonHandler(BaseHTTPRequestHandler):
         )
 
     def do_OPTIONS(self) -> None:
+        self.command = "OPTIONS"
+        self._request_started_at = time.perf_counter()
         self.request_id, self.correlation_id = (
             self._request_id(),
             self.headers.get("X-Correlation-ID") or new_id(),
@@ -404,6 +432,8 @@ class JsonHandler(BaseHTTPRequestHandler):
         self._dispatch("DELETE")
 
     def _dispatch(self, method: str) -> None:
+        self.command = method
+        self._request_started_at = time.perf_counter()
         self.request_id, self.correlation_id = (
             self._request_id(),
             self.headers.get("X-Correlation-ID") or new_id(),
