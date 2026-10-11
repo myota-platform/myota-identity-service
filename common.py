@@ -423,6 +423,20 @@ class JsonHandler(BaseHTTPRequestHandler):
             },
         )
 
+    def _send_metrics(self, payload: str) -> None:
+        self._log_http_completed(200)
+        data = payload.encode("utf-8")
+        self.send_response(200)
+        self.send_header(
+            "Content-Type", "text/plain; version=0.0.4; charset=utf-8"
+        )
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        if self._http_span and self._http_span.trace_id:
+            self.send_header("X-Trace-ID", self._http_span.trace_id)
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_OPTIONS(self) -> None:
         self.command = "OPTIONS"
         self._request_started_at = time.perf_counter()
@@ -482,6 +496,9 @@ class JsonHandler(BaseHTTPRequestHandler):
             )
             return
         path = self.path.split("?", 1)[0]
+        if method == "GET" and path == "/metrics":
+            self._send_metrics(type(self).metrics_text())
+            return
         for (route_method, pattern), fn in self.routes.items():
             if route_method != method:
                 continue

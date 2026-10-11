@@ -63,10 +63,12 @@ analysis](https://github.com/myota-platform/myota-docs/blob/main/docs/charter-ga
 including production key management, abuse controls, user self-service, and
 security review.
 
-The durable runtime also exposes aggregate identity metrics at `/metrics` for
-users, participation type, callsigns, roles, security events and locked
-accounts. OpenTelemetry request telemetry is enabled by the deployment
-configuration rather than by the unit-test adapter.
+The durable runtime exposes bounded aggregate gauges at `/metrics` for user
+counts by the fixed participation types, callsigns, active role assignments,
+retained security events, and currently locked accounts. Labels contain only
+the two fixed participation types; the endpoint never exposes account,
+callsign, email, credential, or event identifiers. OpenTelemetry request
+telemetry is configured separately by deployment.
 
 ## Architecture
 
