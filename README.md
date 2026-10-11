@@ -1,11 +1,10 @@
 # MyOTA identity service
 
-The administrative permission catalogue includes `operations.read` for the
-read-only NATS/JetStream status/history page and `observability.view` for
-operational status. These can be assigned to custom roles without granting
-global administration or domain-write access. Neither is granted automatically
-to ordinary participants. The operations API validates signed access tokens;
-the browser never receives broker or database credentials.
+The administrative permission catalogue exposes `observability.view` for
+Grafana metrics and dashboards. The Gateway validates each session through the
+live Identity API and derives scopes from current role assignments. The retired
+`operations.read` permission is removed from stored role definitions and is
+not returned by the current-account API.
 
 MyOTA is a programme-agnostic platform for outdoor activation programmes. MPOTA is represented as a configured programme, not as the platform itself. No rules or charter text are copied from POTA or any other programme: every programme supplies its own configuration, policy, eligibility, awards and public charter.
 
@@ -55,8 +54,7 @@ The standalone entry point listens on port 8001 and needs explicit database
 configuration for durable storage. For the complete durable stack, use
 [myota-deploy with Colima](https://github.com/myota-platform/myota-deploy#run-the-vertical-slice):
 identity uses plain PostgreSQL `myota_core`, not PostGIS or `myota_activity`.
-The [JetStream access guide](https://github.com/myota-platform/myota-docs/blob/main/docs/operations/messaging/jetstream-admin-status.md)
-documents the latest operations permissions and admin integration.
+The [observability access guide](https://github.com/myota-platform/myota-docs/blob/main/docs/observability/overview.md) documents the current Grafana authorization boundary.
 
 The remaining Internet-facing identity gates are listed in the [charter gap
 analysis](https://github.com/myota-platform/myota-docs/blob/main/docs/charter-gap-analysis.md),
