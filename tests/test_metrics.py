@@ -2,6 +2,13 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+from common import (
+    _HTTP_METRIC_LOCK,
+    _HTTP_METRIC_VALUES,
+    _record_http_metric,
+    _render_http_metrics,
+)
+
 from identity import IdentityHandler
 
 
