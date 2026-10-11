@@ -466,7 +466,10 @@ class JsonHandler(BaseHTTPRequestHandler):
         started = getattr(self, "_request_started_at", time.perf_counter())
         duration_ms = (time.perf_counter() - started) * 1000
         _record_http_metric(
-            getattr(self, "command", "UNKNOWN"), route_name, status, duration_ms
+            getattr(self, "command", "UNKNOWN"),
+            route_name,
+            status,
+            duration_ms,
         )
         span = getattr(self, "_http_span", None)
         if span:
