@@ -62,15 +62,13 @@ class IdentityResourceRouteTests(unittest.TestCase):
             IdentityHandler.set_primary,
         )
 
-    def test_legacy_mutations_are_marked_as_compatibility_routes(self):
-        self.assertIn(
+    def test_removed_legacy_mutations_are_not_registered_or_deprecated(self):
+        removed_routes = {
             ("POST", "/v1/identity/admin/accounts/{accountId}/update"),
-            IdentityHandler.deprecated_routes,
-        )
-        self.assertIn(
             ("POST", "/v1/identity/accounts/{accountId}/roles"),
-            IdentityHandler.deprecated_routes,
-        )
+        }
+        self.assertTrue(removed_routes.isdisjoint(IdentityHandler.routes))
+        self.assertEqual(IdentityHandler.deprecated_routes, set())
 
     def test_primary_callsign_put_is_idempotent_with_a_key(self):
         request = {
